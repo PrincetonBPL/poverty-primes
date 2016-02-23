@@ -1,0 +1,11 @@
+survey: 10
+sample: 2
+checkday: 4
+checkdkrfweek: 4
+maxsalivaid: 999
+pacomments: J(0, 1, "")
+dupdates: ("nationalid", "6/10/2011" \ "namefl", "7/25/2011")
+oldtonew: "Old to new step 1" "Old to new step 2a" "Old to new step 2b" "Old to new step 3" "Old to new step 4" "Old to new step 5" "Old barcode entry merge" "Old sample merge" "Old voucher merge" "Old BC merge"
+datadir: C:\Users\mcollins\Dropbox\UMIP\SCALE-UP\Data and program\Data
+logdir: C:\Users\mcollins\Documents\Merge logs
+voucher: 5

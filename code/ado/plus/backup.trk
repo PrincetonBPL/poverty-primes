@@ -1,0 +1,147 @@
+* 00000005
+*! version 1.0.0
+* Do not erase or edit this file
+* It is used by Stata to track the ado and help
+* files you have installed.
+
+S http://fmwww.bc.edu/RePEc/bocode/c
+N cfby.pkg
+D  4 Jan 2012
+U 1
+d 'CFBY': module to compare datasets and produce discrepancy rates
+d 
+d   cfby compares the variables in varlist from the dataset in
+d memory to the variables in varlist from the using dataset and
+d displays the discrepancy rates by a common variable.  It is
+d useful if you are doing data entry and want to get discrepancy
+d rates of data entry officers.
+d 
+d KW: data management
+d KW: data entry
+d KW: discrepancy rates
+d 
+d Requires: Stata version 10.1
+d 
+d Distribution-Date: 20110708
+d 
+d Author: Ryan Knight,  Innovations for Poverty Action
+d Support: email rknight@@poverty-action.org
+d 
+f c\cfby.ado
+f c\cfby.sthlp
+e
+S http://www.stata.com/stb/stb60
+N sxd4.pkg
+D  8 Jan 2012
+U 2
+d STB-60 sxd4.  Sample size estimation for cluster designed samples
+d STB insert by Joanne M. Garrett, University of North Carolina
+d Support:  joanne_garrett@@med.unc.edu
+d After installation, see help ^sampclus^
+f s\sampclus.ado
+f s\sampclus.hlp
+e
+S http://fmwww.bc.edu/RePEc/bocode/o
+N outreg2.pkg
+D  7 Mar 2012
+U 3
+d 'OUTREG2': module to arrange regression outputs into an illustrative table
+d 
+d outreg2 provides a fast and easy way to produce an illustrative
+d table  of regression outputs. The regression outputs are produced
+d piecemeal and are  difficult to compare without some type of
+d rearrangement. outreg2  automates this process by concatenating
+d the successive regression ouputs in a  vertical format. The
+d resulting table is saved to the disk in ASCII  format, which can
+d be read by other programs. outreg2 thus facilitates  the
+d convertion of regression outputs to a standard format suitable
+d for  inclusion in a scholarly publication. The functionality of
+d outreg2 is based on the earlier package outreg,  by John Luke
+d Gallup. Unlike outreg, outreg2 is capable of writing LaTeX-format
+d tables, as well as ASCII, MS Word and MS Excel.
+d 
+d KW: regression
+d KW: output
+d KW: tables
+d KW: tab-delimited output
+d KW: LaTeX
+d KW: Word
+d KW: Excel
+d 
+d Requires: Stata version 7
+d 
+d Distribution-Date: 20100416
+d 
+d Author: Roy Wada
+d Support: email roywada@@hotmail.com
+d 
+f o\outreg2.ado
+f o\outreg2_prf.ado
+f o\outreg2.hlp
+f s\shellout.ado
+f s\shellout.hlp
+f s\seeout.ado
+f s\seeout.hlp
+e
+S http://fmwww.bc.edu/repec/bocode/c
+N cfout.pkg
+D 25 Sep 2012
+U 4
+d 'CFOUT': module to detect differences between datasets
+d 
+d    cfout compares the variables in varlist from the dataset in
+d memory to the variables in varlist from the using dataset and
+d saves a list of differences to a .csv file.  It    is useful if
+d you are doing data entry and want to get an easy-to-work-with
+d list of discrepancies between the first and second entries of a
+d dataset.    readreplace makes many replacements from a very
+d specifically-formated .csv file.  It is intended for use with the
+d output from cfout.
+d 
+d KW: data management
+d KW: compare
+d KW: data entry
+d 
+d Requires: Stata version 10.1
+d 
+d Distribution-Date: 20110708
+d 
+d Author: Ryan Knight,  Innovations for Poverty Action
+d Support: email rknight@@poverty-action.org
+d 
+f c\cfout.ado
+f c\cfout.sthlp
+f r\readreplace.ado
+f r\readreplace.sthlp
+e
+S http://fmwww.bc.edu/repec/bocode/s
+N strgroup.pkg
+D 17 Oct 2012
+U 5
+d 'STRGROUP': module to match strings based on their Levenshtein edit distance
+d 
+d strgroup matches similar strings together. This can be useful
+d when merging data that contain typos. For example, "widgets" will
+d not merge with "widgetts" because the strings are not identical.
+d strgroup provides a way to match strings in an objective and
+d automated manner.
+d 
+d KW: data management
+d KW: string match
+d KW: string merge
+d KW: string group
+d KW: levenshtein
+d 
+d Requires: Stata version 9.2
+d 
+d Distribution-Date: 20120204
+d 
+d Author: Julian Reif, University of Chicago
+d Support: email jreif@@uchicago.edu
+d 
+f s\strgroup.ado
+f s\strgroup.hlp
+f l\levenshtein.ado
+f l\levenshtein.hlp
+f s\strgroup.plugin
+e
