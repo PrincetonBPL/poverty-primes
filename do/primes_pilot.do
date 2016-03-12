@@ -61,6 +61,8 @@ keep surveyid Group Likert* ShockYN
 
 ren Group treatment
 replace treatment = 2 - treatment
+gen control = 1 - treatment
+
 replace ShockYN = 2 - ShockYN
 
 tempfile primes
@@ -139,6 +141,9 @@ merge 1:1 surveyid using `checks', nogen
 merge 1:1 surveyid using `panas', nogen
 merge 1:1 surveyid using `comp', nogen
 
+la def la_treatment 0 "Control" 1 "Treated"
+la val treatment la_treatment
+
 la var surveyid "Subject ID"
 la var session "Session"
 la var version "Version"
@@ -177,6 +182,7 @@ foreach var of varlist Likert* Cantril* Worry* panas_* stress comprehension {
 
 	egen `var'_z = weightave(`var'), normby(control)
 	loc label: var la `var'
+	la var `var'_z "`label'"
 
 }
 
@@ -186,43 +192,57 @@ twoway (hist comprehension if ~treatment, fcolor(none) lcolor(gs2) lpattern(dash
 graph export "$fig_dir/hist-comprehension.pdf", as(pdf) replace
 
 estpost tab session treatment
-esttab using "$tab_dir/tab-session", booktabs unstack noobs nonumber nomtitle label mgroups("Treatment group", pattern(1 0 0 1) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) replace
+esttab using "$tab_dir/tab-session", booktabs unstack noobs nonumber nomtitle label nonotes mgroups("Treatment group", pattern(1 0 0 1) prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})) replace
+
+* probably some unconditional summary stats
 
 /* Treatment effects */
 
-loc checks ""
-loc positive ""
-loc negative ""
+loc primes "ShockYN LikertFP LikertShock LikertInc1 LikertInc2"
+loc checks "CantrilNow CantrilFive Worry1 Worry2 Worry3"
+loc positive "panas_interested_z panas_excited_z panas_strong_z panas_enthusiastic_z panas_proud_z panas_alert_z panas_inspired_z panas_determined_z panas_attentive_z panas_active_z"
+loc negative "panas_distressed_z panas_upset_z panas_guilty_z panas_scared_z panas_hostile_z panas_irritable_z panas_ashamed_z panas_nervous_z panas_jittery_z panas_afraid_z stress_z"
 
-foreach group in checks positive negative {
+foreach group in primes checks positive negative {
+
+	loc columns = 0
 
 	foreach yvar in ``group'' {
 
 		eststo, prefix(ols): reg `yvar' treatment i.session, vce(cluster session)
 
-		foreach xvar in readlanguage {
+		qui testparm i.session
+		estadd loc pval = `r(p)'
 
-			eststo, prefix(het): reg `yvar' i.treatment##i.xvar i.session, vce(cluster session)
+		qui sum `yvar' if control
+		estadd loc cmean = `r(N)'
 
-		}
-
-		loc prehead "\begin{table}[htbp]\centering \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi} \caption{Attrition by treatment group} \label{tab:reg-subattr} \maxsizebox*{\textwidth}{\textheight}{ \begin{threeparttable} \begin{tabular}{l*{1}{c}} \toprule"
-		loc postfoot "\bottomrule \end{tabular} \begin{tablenotes}[flushleft] \footnotesize \item \emph{Note:} @note \end{tablenotes} \end{threeparttable} } \end{table}"
-		loc footnote "This table reports coefficient estimates for the regression of attrition on treatment assignment. Standard errors are in parentheses. * denotes significance at 10 pct., ** at 5 pct., and *** at 1 pct. level."
-		
-		esttab het* using "$tab_dir/het-`yvar'", booktabs nogap label se compress nobaselevels star(* 0.10 ** 0.05 *** 0.01) prehead("`prehead'") postfoot("`postfoot'") note("`footnote") replace
+		loc ++columns
 
 	}
 
-	loc prehead "\begin{table}[htbp]\centering \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi} \caption{Attrition by treatment group} \label{tab:reg-subattr} \maxsizebox*{\textwidth}{\textheight}{ \begin{threeparttable} \begin{tabular}{l*{1}{c}} \toprule"
+	loc prehead "\begin{table}[htbp]\centering \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi} \caption{Attrition by treatment group} \label{tab:reg-subattr} \maxsizebox*{\textwidth}{\textheight}{ \begin{threeparttable} \begin{tabular}{l*{`columns'}{c}} \toprule"
 	loc postfoot "\bottomrule \end{tabular} \begin{tablenotes}[flushleft] \footnotesize \item \emph{Note:} @note \end{tablenotes} \end{threeparttable} } \end{table}"
-	loc footnote "This table reports coefficient estimates for the regression of attrition on treatment assignment. Standard errors are in parentheses. * denotes significance at 10 pct., ** at 5 pct., and *** at 1 pct. level."
+	loc footnote "This table reports coefficient estimates for the regression of each outcome variable on the manipulation. Standard errors are in parentheses. * denotes significance at 10 pct., ** at 5 pct., and *** at 1 pct. level."
 
-	esttab ols* using "$tab_dir/reg-`yvar'", booktabs nogap label se compress nobaselevels star(* 0.10 ** 0.05 *** 0.01) prehead("`prehead'") postfoot("`postfoot'") note("`footnote") replace
+	esttab ols* using "$tab_dir/reg-`group'", booktabs nogap label se compress nobaselevels ar2 obslast nomtitle keep(treatment) scalars("pval FE \(p\)-value" "cmean Control mean") sfmt(2) star(* 0.10 ** 0.05 *** 0.01) prehead("`prehead'") postfoot("`postfoot'") note("`footnote") replace
 
 	eststo clear
 
 }
+
+* foreach xvar in readlanguage {
+
+* 	eststo, prefix(het): reg `yvar' i.treatment##i.xvar i.session, vce(cluster session)
+
+* }
+
+* loc prehead "\begin{table}[htbp]\centering \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi} \caption{Attrition by treatment group} \label{tab:reg-subattr} \maxsizebox*{\textwidth}{\textheight}{ \begin{threeparttable} \begin{tabular}{l*{1}{c}} \toprule"
+* loc postfoot "\bottomrule \end{tabular} \begin{tablenotes}[flushleft] \footnotesize \item \emph{Note:} @note \end{tablenotes} \end{threeparttable} } \end{table}"
+* loc footnote "This table reports coefficient estimates for the regression of attrition on treatment assignment. Standard errors are in parentheses. * denotes significance at 10 pct., ** at 5 pct., and *** at 1 pct. level."
+
+* esttab het* using "$tab_dir/het-`yvar'", booktabs nogap label se compress nobaselevels star(* 0.10 ** 0.05 *** 0.01) prehead("`prehead'") postfoot("`postfoot'") note("`footnote") replace
+
 
 * outcomes: standardized likerts, yesno, standardized comprehension, worry index, affect index, stress
 * regression with controls
