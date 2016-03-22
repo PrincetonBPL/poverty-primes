@@ -124,6 +124,18 @@ keep surveyid Comp*
 ren Comp1 comprehension
 ren Comp2 readlanguage
 
+recode comprehension (1/3 = 0) (4/5 = 1), gen(compdummy)
+la var compdummy "Comprehension"
+
+tab readlanguage, gen(language)
+
+ren language1 kiswahili
+la var kiswahili "Kiswahili"
+ren language2 english
+la var english "English"
+ren language3 otherlang
+la var otherlang "Other language"
+
 tempfile comp
 save `comp', replace
 
@@ -213,8 +225,20 @@ foreach group in primes checks positive negative {
 
 	foreach yvar in ``group'' {
 
-		if strpos("`yvar'", "ShockYN") == 1 eststo: reg `yvar' treatment comprehension_z i.session, vce(cluster session)
-		else eststo: reg `yvar'_z treatment comprehension_z i.session, vce(cluster session)
+		if strpos("`yvar'", "ShockYN") == 1 eststo, prefix(plain): reg `yvar' treatment i.session, vce(r)
+		else eststo, prefix(plain): reg `yvar'_z treatment i.session, vce(r)
+
+		qui sum `yvar' if control
+		estadd loc cmean = round(`r(mean)', 0.01)
+
+		if strpos("`yvar'", "ShockYN") == 1 eststo, prefix(comp): reg `yvar' i.treatment##i.compdummy i.session, vce(r)
+		else eststo, prefix(comp): reg `yvar'_z i.treatment##i.compdummy i.session, vce(r)
+
+		qui sum `yvar' if control
+		estadd loc cmean = round(`r(mean)', 0.01)
+
+		if strpos("`yvar'", "ShockYN") == 1 eststo, prefix(lang): reg `yvar' i.treatment##i.english i.session, vce(r)
+		else eststo, prefix(lang): reg `yvar'_z i.treatment##i.english i.session, vce(r)
 
 		qui sum `yvar' if control
 		estadd loc cmean = round(`r(mean)', 0.01)
@@ -225,32 +249,18 @@ foreach group in primes checks positive negative {
 
 	}
 
-	loc prehead "\begin{table}[htbp]\centering \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi} \caption{``group'title'} \label{tab:reg-`group'} \maxsizebox*{\textwidth}{\textheight}{ \begin{threeparttable} \begin{tabular}{l*{`columns'}{c}} \toprule"
+	loc prehead1 "\begin{table}[htbp]\centering \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi} \caption{``group'title'} \label{tab:reg-`group'} \maxsizebox*{\textwidth}{\textheight}{ \begin{threeparttable} \begin{tabular}{l*{`columns'}{c}} \toprule"
+	loc prehead2 "\begin{table}[htbp]\centering \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi} \caption{``group'title' by comprehension} \label{tab:comp-`group'} \maxsizebox*{\textwidth}{\textheight}{ \begin{threeparttable} \begin{tabular}{l*{`columns'}{c}} \toprule"
+	loc prehead3 "\begin{table}[htbp]\centering \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi} \caption{``group'title' by English as best language} \label{tab:lang-`group'} \maxsizebox*{\textwidth}{\textheight}{ \begin{threeparttable} \begin{tabular}{l*{`columns'}{c}} \toprule"
+	
 	loc postfoot "\bottomrule \end{tabular} \begin{tablenotes}[flushleft] \footnotesize \item \emph{Note:} @note \end{tablenotes} \end{threeparttable} } \end{table}"
-	loc footnote "Dependent variables are standardized to their control group means. `vardesc'."
+	loc footnote "Dependent variables are standardized to their control group means. Session fixed effects are included. `vardesc'."
 
-	esttab using "$tab_dir/reg-`group'", booktabs nogap label se compress nobaselevels ar2 obslast nomtitle keep(treatment) scalars("cmean Control mean") star(* 0.10 ** 0.05 *** 0.01) prehead("`prehead'") postfoot("`postfoot'") note("`footnote'") replace
+	esttab plain* using "$tab_dir/reg-`group'", booktabs nogap label se compress nobaselevels ar2 obslast nomtitle keep(treatment) scalars("cmean Control mean") star(* 0.10 ** 0.05 *** 0.01) prehead("`prehead1'") postfoot("`postfoot'") note("`footnote'") replace
+	esttab comp* using "$tab_dir/comp-`group'", booktabs nogap label se compress nobaselevels ar2 obslast nomtitle keep(1.treatment 1.treatment#1.compdummy) scalars("cmean Control mean") star(* 0.10 ** 0.05 *** 0.01) prehead("`prehead2'") postfoot("`postfoot'") note("`footnote'") replace
+	esttab lang* using "$tab_dir/lang-`group'", booktabs nogap label se compress nobaselevels ar2 obslast nomtitle keep(1.treatment 1.treatment#1.english) scalars("cmean Control mean") star(* 0.10 ** 0.05 *** 0.01) prehead("`prehead3'") postfoot("`postfoot'") note("`footnote'") replace
 
 	eststo clear
 
 }
-
-/* Heterogeneous treatment effects */
-
-* foreach xvar in readlanguage {
-
-* 	eststo, prefix(het): reg `yvar' i.treatment##i.xvar i.session, vce(cluster session)
-
-* }
-
-* loc prehead "\begin{table}[htbp]\centering \def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi} \caption{Attrition by treatment group} \label{tab:reg-subattr} \maxsizebox*{\textwidth}{\textheight}{ \begin{threeparttable} \begin{tabular}{l*{1}{c}} \toprule"
-* loc postfoot "\bottomrule \end{tabular} \begin{tablenotes}[flushleft] \footnotesize \item \emph{Note:} @note \end{tablenotes} \end{threeparttable} } \end{table}"
-* loc footnote "This table reports coefficient estimates for the regression of attrition on treatment assignment. Standard errors are in parentheses. * denotes significance at 10 pct., ** at 5 pct., and *** at 1 pct. level."
-
-* esttab het* using "$tab_dir/het-`yvar'", booktabs nogap label se compress nobaselevels star(* 0.10 ** 0.05 *** 0.01) prehead("`prehead'") postfoot("`postfoot'") note("`footnote") replace
-
-
-* outcomes: standardized likerts, yesno, standardized comprehension, worry index, affect index, stress
-* regression with controls
-* het effects by income, comprehension, language, version
 
